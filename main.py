@@ -6,6 +6,7 @@ from court_line_detector.court_line_detector import CourtLineDetector
 import cv2
 
 def main():
+    
     # Reading video:
 
     input_video_path = "input_videos/input_video.mp4"
