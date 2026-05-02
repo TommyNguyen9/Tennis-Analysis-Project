@@ -2,7 +2,7 @@ import torch
 import torchvision.transforms as transforms
 import cv2
 import torchvision.models as models
-s
+
 class CourtLineDetector:
 
     def __init__(self, model_path):
