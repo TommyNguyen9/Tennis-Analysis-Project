@@ -50,7 +50,7 @@ class CourtLineDetector:
             frame = self.draw_keypoints(frame, keypoints)
             output_video_frames.append(frame)
         return output_video_frames
-    
+
 
 
 
