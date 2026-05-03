@@ -55,6 +55,11 @@ class BallTracker:
             if self.fake_ball_pos[1] >= int(h * 0.75):
                 self.velocity[1] *= -1
 
+            # Bounce on top:
+
+            if self.fake_ball_pos[1] <= 0:
+                self.velocity[1] *= -1
+
             # Bounce off walls:
 
             if self.fake_ball_pos[0] <= 0 or self.fake_ball_pos[0] >= w:
@@ -251,9 +256,14 @@ class BallTracker:
             # Drawing bounding boxes:
             for track_id, bbox in ball_dict.items():
                 x1, y1, x2, y2 = bbox
-                cv2.putText(frame, f"Ball ID: {track_id}", (int(bbox[0]), int(bbox[1] - 10)), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 0, 255), 2)
-                cv2.rectangle(frame, (int(x1), int(y1)), (int(x2), int(y2)), (0, 255, 255), 2)
-                cv2.rectangle(frame, (int(x1), int(y1)), (int(x2), int(y2)), (0, 255, 255), 2)
+
+                cx = int((x1 + x2) / 2)
+                cy = int((y1 + y2) / 2)
+
+                # print("Ball Center:", cx, cy)
+                # cv2.putText(frame, f"Ball ID: {track_id}", (int(bbox[0]), int(bbox[1] - 10)), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 0, 255), 2)
+                # cv2.rectangle(frame, (int(x1), int(y1)), (int(x2), int(y2)), (0, 255, 255), 2)
+                # cv2.rectangle(frame, (int(x1), int(y1)), (int(x2), int(y2)), (0, 255, 255), 2)
 
             output_video_frames.append(frame)
 
