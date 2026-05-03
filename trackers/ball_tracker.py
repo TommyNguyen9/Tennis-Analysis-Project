@@ -121,20 +121,6 @@ class BallTracker:
         # return ball_detections
 
 
-        # if read_from_stub and stub_path is not None:
-        #     with open(stub_path, 'rb') as f:
-        #         ball_detections = pickle.load(f)
-        #     return ball_detections
-
-        # for frame in frames:
-        #     ball_dict = self.detect_frame(frame)
-        #     ball_detections.append(ball_dict)
-        
-        # if stub_path is not None:
-        #     with open(stub_path, 'wb') as f:
-        #         pickle.dump(ball_detections, f)
-
-        # return ball_detections
 
     def detect_frame(self, frame):
         results = self.model.predict(frame, conf = 0.4)[0]
@@ -255,15 +241,10 @@ class BallTracker:
 
             # Drawing bounding boxes:
             for track_id, bbox in ball_dict.items():
-                x1, y1, x2, y2 = bbox
-
-                cx = int((x1 + x2) / 2)
-                cy = int((y1 + y2) / 2)
-
-                # print("Ball Center:", cx, cy)
-                # cv2.putText(frame, f"Ball ID: {track_id}", (int(bbox[0]), int(bbox[1] - 10)), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 0, 255), 2)
-                # cv2.rectangle(frame, (int(x1), int(y1)), (int(x2), int(y2)), (0, 255, 255), 2)
-                # cv2.rectangle(frame, (int(x1), int(y1)), (int(x2), int(y2)), (0, 255, 255), 2)
+                x1, y1, x2, y2 = bbox               
+                cv2.putText(frame, f"Ball ID: {track_id}", (int(bbox[0]), int(bbox[1] - 10)), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 0, 255), 2)
+                cv2.rectangle(frame, (int(x1), int(y1)), (int(x2), int(y2)), (0, 255, 255), 2)
+                cv2.rectangle(frame, (int(x1), int(y1)), (int(x2), int(y2)), (0, 255, 255), 2)
 
             output_video_frames.append(frame)
 
