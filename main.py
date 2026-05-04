@@ -28,6 +28,15 @@ def main():
                                                      stub_path = "tracker_stubs/ball_detections.pk1"
                                                      )
     
+    movements = ball_tracker.compute_movement()
+
+    hits = ball_tracker.detect_hits(movements)
+
+    print(hits[:50])
+    print(movements[55:65])
+
+    hits = [0] + hits
+    
     ball_detections = ball_tracker.interpolate_ball_positions(ball_detections)
     
     # Court Line Detector model:
@@ -49,7 +58,7 @@ def main():
     # Player bounding boxes:
 
     output_video_frames = player_tracker.draw_bbboxes(video_frames, player_detections)
-    output_video_frames = ball_tracker.draw_bbboxes(output_video_frames, ball_detections)
+    output_video_frames = ball_tracker.draw_bbboxes(output_video_frames, ball_detections, hits)
 
     # Drawing the court:
 
