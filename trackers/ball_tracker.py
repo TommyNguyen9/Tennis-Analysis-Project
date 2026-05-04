@@ -109,7 +109,7 @@ class BallTracker:
         return hits
 
     def detect_frame(self, frame):
-        results = self.model.predict(frame, conf = 0.4)[0]
+        results = self.model.predict(frame, conf = 0.2)[0]
         
         ball_dict = {}
 
@@ -166,10 +166,21 @@ class BallTracker:
 
         # Updating Tracking:
         cx, cy = get_center(best_box)
+        if self.prev_center is not None:
+            dx = cx - self.prev_center[0]
+            dy = cy - self.prev_center[1]
+            distance = (dx**2 + dy**2) ** 0.5
+
+            if distance > 80:
+                if self.prev_bbox is not None:
+                    ball_dict[1] = self.prev_bbox
+                return ball_dict
+
         self.prev_center = (cx, cy)
         
        
         result = best_box.xyxy.tolist()[0]
+        self.prev_bbox = result
         ball_dict[1] = result
 
         return ball_dict
