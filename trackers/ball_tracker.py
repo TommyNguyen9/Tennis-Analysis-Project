@@ -28,18 +28,15 @@ class BallTracker:
         return ball_positions
 
 
-
-
     def detect_frames(self, frames, read_from_stub = False, stub_path = None):
-
-    
 
     
         ball_detections = []
 
-        for frame in frames:
+        for i, frame in enumerate(frames):
             h, w, _ = frame.shape
 
+     
         # Initialize position:
 
             if self.fake_ball_pos is None:
@@ -50,43 +47,15 @@ class BallTracker:
             self.fake_ball_pos[0] += self.velocity[0]
             self.fake_ball_pos[1] += self.velocity[1]
 
+            if i % 60 == 0:
+                self.velocity[0] *= 1
+
+          
             # Bounce on floor:
 
-            if self.fake_ball_pos[1] >= int(h * 0.75):
-                self.velocity[1] *= -1
+            floor_y = int(h * 0.85) # Virtual floor.
 
-            # Bounce on top:
-
-            if self.fake_ball_pos[1] <= 0:
-                self.velocity[1] *= -1
-
-            # Bounce off walls:
-
-            if self.fake_ball_pos[0] <= 0 or self.fake_ball_pos[0] >= w:
-                self.velocity[0] *= -1
-
-            x, y = self.fake_ball_pos
-
-            # Bounding box:
-
-            bbox = (x - 5, y - 5, x + 5, y + 5)
-
-            ball_detections.append({1: bbox})
-            h, w, _ = frame.shape
-
-        # Initialize position:
-
-            if self.fake_ball_pos is None:
-                self.fake_ball_pos = [w // 2, int(h * 0.75)]
-
-            # Moving the ball:
-
-            self.fake_ball_pos[0] += self.velocity[0]
-            self.fake_ball_pos[1] += self.velocity[1]
-
-            # Bounce on floor:
-
-            if self.fake_ball_pos[1] >= int(h * 0.75):
+            if self.fake_ball_pos[1] >= h or self.fake_ball_pos[1] <= 0:
                 self.velocity[1] *= -1
 
             # Bounce off walls:
@@ -103,23 +72,6 @@ class BallTracker:
             ball_detections.append({1: bbox})
 
         return ball_detections
-
-
-        # if read_from_stub and stub_path is not None:
-        #     with open(stub_path, 'rb') as f:
-        #         ball_detections = pickle.load(f)
-        #     return ball_detections
-
-        # for frame in frames:
-        #     ball_dict = self.detect_frame(frame)
-        #     ball_detections.append(ball_dict)
-        
-        # if stub_path is not None:
-        #     with open(stub_path, 'wb') as f:
-        #         pickle.dump(ball_detections, f)
-
-        # return ball_detections
-
 
 
     def detect_frame(self, frame):
@@ -202,7 +154,7 @@ class BallTracker:
         cx, cy = get_center(best_box)
         self.prev_center = (cx, cy)
 
-        print("Confidence: ", float(best_box.conf))
+        # print("Confidence: ", float(best_box.conf))
         
        
         def get_center(box):
