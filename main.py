@@ -32,8 +32,8 @@ def main():
 
     hits = ball_tracker.detect_hits(movements)
 
-    print(hits[:50])
-    print(movements[55:65])
+    ball_tracker.hit_frames = {i for i, h in enumerate(hits) if h == 1}
+
 
     hits = [0] + hits
     
@@ -73,7 +73,6 @@ def main():
 
     for i, frame in enumerate(output_video_frames):
         cv2.putText(frame, f"Frame: {i}", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
-
 
 
     save_video(output_video_frames, "output_videos/output_video.avi")

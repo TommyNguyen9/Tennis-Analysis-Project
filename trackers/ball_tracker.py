@@ -13,6 +13,8 @@ class BallTracker:
 
         self.centers = []
         self.prev_bbox = None
+        self.missed_frames = 0
+        self.hit_frames = set()
 
         print("Model:", self.model.model_name if hasattr(self.model, "model_name") else self.model)
 
@@ -39,11 +41,10 @@ class BallTracker:
 
         self.fake_ball_pos = None
 
-        for frame in frames:
-            ball_dict = self.detect_frame(frame)
+        for i, frame in enumerate(frames):
+            ball_dict = self.detect_frame(frame, i)
             ball_detections.append(ball_dict)
 
-        
 
         return ball_detections
     
@@ -76,8 +77,14 @@ class BallTracker:
 
         return hits
 
-    def detect_frame(self, frame):
+    def detect_frame(self, frame, frame_idx):
+        if frame_idx in self.hit_frames:
+            self.prev_center = None
+
         results = self.model.predict(frame, conf = 0.25)[0]
+
+        MAX_DIST = 250
+        MAX_DIST_SQ = MAX_DIST ** 2
         
         print("Boxes detected:", 0 if results.boxes is None else len(results.boxes))
         ball_dict = {}
@@ -99,24 +106,34 @@ class BallTracker:
         for b in results.boxes:
             cls = int(b.cls.item())
 
-            if cls != 32:
-                continue
+            # if cls != 32:
+            #     continue
 
             x1, y1, x2, y2 = b.xyxy.tolist()[0]
             w_box = x2 - x1
             h_box = y2 - y1
 
+            print(f"w: {w_box:.1f}, h: {h_box:1f}")
+
             cx = (x1 + x2) / 2
             cy = (y1 + y2) / 2
 
-            if w_box > 200 or h_box > 200:
+            print(f"RAW -> w:{w_box:.1f}, h:{h_box:.1f}, cx:{cx:.1f}, cy:{cy:.1f}")
+
+            if w_box > 80 or h_box > 80:
                 continue
 
-            if cy < h * 0.1:
+            ratio = w_box / h_box if h_box != 0 else 0
+
+            if ratio < 0.5 or ratio > 2:
+                continue
+
+            if cy < h * 0.25:
                 continue
 
             filtered_boxes.append(b)
 
+    
         if self.prev_center is not None and len(filtered_boxes) == 0:
            if len(self.centers) >= 2:
                dx = self.centers[-1][0] - self.centers[-2][0]
@@ -134,7 +151,7 @@ class BallTracker:
                dy *= 0.8
 
                if cx < 0 or cx > frame.shape[1] or cy < 0 or cy > frame.shape[0]:
-                   return {1: self.prev_bbox}
+                   return {1: self.prev_bbox} if self.prev_bbox is not None else {}
 
                size = 10
                bbox = (cx - size, cy - size, cx + size, cy + size)
@@ -143,26 +160,67 @@ class BallTracker:
                self.prev_bbox = bbox
 
                return {1: bbox}
-           
-           return {1: self.prev_bbox}
         
-        if len(filtered_boxes) > 0:
-            boxes_to_use = filtered_boxes
+        if len(filtered_boxes) == 0:
+            boxes_to_use = []
         else:
-            boxes_to_use = results.boxes
+            boxes_to_use = filtered_boxes
+
+        if len(boxes_to_use) == 0:
+            self.missed_frames += 1
+
+            if self.missed_frames > 5:
+                self.prev_center = None
+                self.prev_bbox = None
+                return {}
             
-        
+            if self.prev_bbox is None:
+                return {}
+            
+            return {1: self.prev_bbox}
+
+           
         if self.prev_center is not None:
-            best_box = min(
-                boxes_to_use,
-                key = lambda b: (
-                    (get_center(b)[0] - self.prev_center[0]) ** 2 +
-                    (get_center(b)[1] - self.prev_center[1]) ** 2
-                )
-            )
+            best_box = None
+            best_dist = float("inf")
+
+            if len(self.centers) >= 2:
+                prev_dx = self.centers[-1][0] - self.centers[-2][0]
+                prev_dy = self.centers[-1][1] - self.centers[-2][1]
+            else:
+                prev_dx, prev_dy = 0, 0
+
+
+            for b in boxes_to_use:
+                cx, cy = get_center(b)
+
+                dx = cx - self.prev_center[0]
+                dy = cy - self.prev_center[1]
+
+                direction_score = dx * prev_dx + dy * prev_dy
+        
+                dist = (cx - self.prev_center[0]) ** 2 + (cy - self.prev_center[1]) ** 2
+
+                if dist < MAX_DIST_SQ and dist < best_dist and direction_score >= 0:
+                    best_dist = dist
+                    best_box = b
+            
+            if best_box is None:
+                self.missed_frames += 1
+
+                self.prev_center = None
+
+                if self.prev_bbox is None:
+                    return {}
+
+                return {1: self.prev_bbox}
+
+            print(f"Selected -> {get_center(best_box)} | Dist: {best_dist:.1f}")
+
         else:
             best_box = max(boxes_to_use, key = lambda b: float(b.conf))
-
+            
+        
         # Extracting coordinates:
         x1, y1, x2, y2 = best_box.xyxy.tolist()[0]    
 
@@ -171,7 +229,16 @@ class BallTracker:
         cx, cy = (x1 + x2) / 2, (y1 + y2) / 2
         
         if self.prev_center is not None:
-            alpha = 0.7
+            dx = cx - self.prev_center[0]
+            dy = cy - self.prev_center[1]
+
+            movement = abs(dx) + abs(dy)
+
+            if movement > 30:
+                alpha = 0.0
+            else:
+                alpha = 0.3
+
 
             cx = alpha * self.prev_center[0] + (1 - alpha) * cx
             cy = alpha * self.prev_center[1] + (1 - alpha) * cy
@@ -197,6 +264,8 @@ class BallTracker:
 
             # Drawing bounding boxes:
             for track_id, bbox in ball_dict.items():
+                if bbox is None or len(bbox) != 4:
+                    continue
                 x1, y1, x2, y2 = bbox               
                 cv2.putText(frame, f"Ball ID: {track_id}", (int(bbox[0]), int(bbox[1] - 10)), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 0, 255), 2)
                 cv2.rectangle(frame, (int(x1), int(y1)), (int(x2), int(y2)), (0, 255, 255), 2)
