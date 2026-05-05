@@ -4,15 +4,17 @@ import pickle
 import random
 import pandas as pd
 
+print("Running file:", __file__)
+
 class BallTracker:
     def __init__(self, model_path):
-        self.model = YOLO(model_path)
+        self.model = YOLO("yolov8n.pt")
         self.prev_center = None
 
-        self.fake_ball_pos = None
-        self.velocity = [8, -5]
         self.centers = []
         self.prev_bbox = None
+
+        print("Model:", self.model.model_name if hasattr(self.model, "model_name") else self.model)
 
         
     def interpolate_ball_positions(self, ball_positions):
@@ -37,45 +39,11 @@ class BallTracker:
 
         self.fake_ball_pos = None
 
-        for i, frame in enumerate(frames):
-            h, w, _ = frame.shape
+        for frame in frames:
+            ball_dict = self.detect_frame(frame)
+            ball_detections.append(ball_dict)
 
-     
-        # Initialize position:
-
-            if self.fake_ball_pos is None:
-                self.fake_ball_pos = [w // 2, int(h * 0.75)]
-
-            # Moving the ball:
-
-            self.fake_ball_pos[0] += self.velocity[0]
-            self.fake_ball_pos[1] += self.velocity[1]
-
-            if i % 60 == 0:
-                self.velocity[0] = random.choice([-12, -10, 10, 12])
-                self.velocity[1] = random.choice([-8, -6, 6, 8])
-          
-            # Bounce on floor:
-
-            floor_y = int(h * 0.85) # Virtual floor.
-
-            if self.fake_ball_pos[1] >= h or floor_y or self.fake_ball_pos[1] <= 0:
-                self.velocity[1] *= -1
-
-            # Bounce off walls:
-
-            # if self.fake_ball_pos[0] <= 0 or self.fake_ball_pos[0] >= w:
-            #     self.velocity[0] *= -1
-
-            x, y = self.fake_ball_pos
-            self.centers.append((x, y))
-
-
-            # Bounding box:
-
-            bbox = (x - 5, y - 5, x + 5, y + 5)
-
-            ball_detections.append({1: bbox})
+        
 
         return ball_detections
     
@@ -109,81 +77,89 @@ class BallTracker:
         return hits
 
     def detect_frame(self, frame):
-        results = self.model.predict(frame, conf = 0.2)[0]
+        results = self.model.predict(frame, conf = 0.25)[0]
         
+        print("Boxes detected:", 0 if results.boxes is None else len(results.boxes))
         ball_dict = {}
 
         if results.boxes is None or len(results.boxes) == 0:
             return ball_dict
         
-        h, w = frame.shape[:2]
-        
-        filtered_boxes = []
-        
         
         # Removing detections in unlikely areas for ball detection:
 
-        for box in results.boxes:
-            cls = int(box.cls.item())
+        def get_center(box):
+            x1, y1, x2, y2 = box.xyxy.tolist()[0]
+            return ((x1 + x2) / 2, (y1 + y2) / 2)
+        
+        h, w = frame.shape[:2]
+        
+        filtered_boxes = []
 
-            # Only sports ball is kept:
+        for b in results.boxes:
+            cls = int(b.cls.item())
+
             if cls != 32:
                 continue
 
-            x1, y1, x2, y2 = box.xyxy.tolist()[0]
-            cx = (x1 + x2) / 2 # Center point of detection.
+            x1, y1, x2, y2 = b.xyxy.tolist()[0]
+            w_box = x2 - x1
+            h_box = y2 - y1
+
+            cx = (x1 + x2) / 2
             cy = (y1 + y2) / 2
 
-
-            if cy < h * 0.1: # Ignoring top
-                continue
-            if cx < w * 0.1 or cx > w * 0.9:
+            if w_box > 200 or h_box > 200:
                 continue
 
-            filtered_boxes.append(box)
+            if cy < h * 0.1:
+                continue
 
+            filtered_boxes.append(b)
 
-        if len(filtered_boxes) == 0:
-            if self.prev_bbox is not None:
-                ball_dict[1] = self.prev_bbox
+        if self.prev_center is not None and len(filtered_boxes) == 0:
+            ball_dict[1] = self.prev_bbox
             return ball_dict
         
-        def get_center(box):
-            x1, y1, x2, y2 = box.xyxy.tolist()[0]
-            return((x1 + x2) / 2, (y1 + y2) / 2)
+        if len(filtered_boxes) > 0:
+            boxes_to_use = filtered_boxes
+        else:
+            boxes_to_use = results.boxes
+            
         
         if self.prev_center is not None:
             best_box = min(
-                filtered_boxes,
-                key = lambda box: (
-                    (get_center(box)[0] - self.prev_center[0]) ** 2 + 
-                    (get_center(box)[1] - self.prev_center[1])**2
-                    )
+                boxes_to_use,
+                key = lambda b: (
+                    (get_center(b)[0] - self.prev_center[0]) ** 2 +
+                    (get_center(b)[1] - self.prev_center[1]) ** 2
                 )
-        
+            )
         else:
-            best_box = max(filtered_boxes, key = lambda box: float(box.conf))
+            best_box = max(boxes_to_use, key = lambda b: float(b.conf))
+
+        # Extracting coordinates:
+        x1, y1, x2, y2 = best_box.xyxy.tolist()[0]    
 
         # Updating Tracking:
-        cx, cy = get_center(best_box)
-        if self.prev_center is not None:
-            dx = cx - self.prev_center[0]
-            dy = cy - self.prev_center[1]
-            distance = (dx**2 + dy**2) ** 0.5
 
-            if distance > 80:
-                if self.prev_bbox is not None:
-                    ball_dict[1] = self.prev_bbox
-                return ball_dict
-
-        self.prev_center = (cx, cy)
+        cx, cy = (x1 + x2) / 2, (y1 + y2) / 2
         
-       
-        result = best_box.xyxy.tolist()[0]
-        self.prev_bbox = result
-        ball_dict[1] = result
+        if self.prev_center is not None:
+            alpha = 0.7
+
+            cx = alpha * self.prev_center[0] + (1 - alpha) * cx
+            cy = alpha * self.prev_center[1] + (1 - alpha) * cy
+            
+        self.prev_center = (cx, cy)
+
+        self.prev_bbox = (x1, y1, x2, y2)
+
+        ball_dict[1] = (x1, y1, x2, y2)
 
         return ball_dict
+        
+
 
         
     
@@ -200,7 +176,6 @@ class BallTracker:
             for track_id, bbox in ball_dict.items():
                 x1, y1, x2, y2 = bbox               
                 cv2.putText(frame, f"Ball ID: {track_id}", (int(bbox[0]), int(bbox[1] - 10)), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 0, 255), 2)
-                cv2.rectangle(frame, (int(x1), int(y1)), (int(x2), int(y2)), (0, 255, 255), 2)
                 cv2.rectangle(frame, (int(x1), int(y1)), (int(x2), int(y2)), (0, 255, 255), 2)
 
             output_video_frames.append(frame)

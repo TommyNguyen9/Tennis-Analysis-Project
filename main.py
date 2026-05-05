@@ -16,7 +16,7 @@ def main():
     # Detecting players & ball:
 
     player_tracker = PlayerTracker(model_path = 'yolov8x')
-    ball_tracker = BallTracker(model_path = 'models/yolo5_last.pt')
+    ball_tracker = BallTracker(model_path = 'models/yolo8vn.pt')
 
     player_detections = player_tracker.detect_frames(video_frames, 
                                                      read_from_stub = True,
@@ -37,7 +37,7 @@ def main():
 
     hits = [0] + hits
     
-    ball_detections = ball_tracker.interpolate_ball_positions(ball_detections)
+    # ball_detections = ball_tracker.interpolate_ball_positions(ball_detections)
     
     # Court Line Detector model:
 
@@ -57,8 +57,8 @@ def main():
 
     # Player bounding boxes:
 
-    output_video_frames = player_tracker.draw_bbboxes(video_frames, player_detections)
-    output_video_frames = ball_tracker.draw_bbboxes(output_video_frames, ball_detections, hits)
+    # output_video_frames = player_tracker.draw_bbboxes(video_frames, player_detections)
+    output_video_frames = ball_tracker.draw_bbboxes(video_frames, ball_detections, hits)
 
     # Drawing the court:
 
