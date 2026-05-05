@@ -118,8 +118,33 @@ class BallTracker:
             filtered_boxes.append(b)
 
         if self.prev_center is not None and len(filtered_boxes) == 0:
-            ball_dict[1] = self.prev_bbox
-            return ball_dict
+           if len(self.centers) >= 2:
+               dx = self.centers[-1][0] - self.centers[-2][0]
+               dy = self.centers[-1][1] - self.centers[-2][1]
+
+               max_speed = 20
+
+               dx = max(-max_speed, min(max_speed, dx))
+               dy = max(-max_speed, min(max_speed, dy))
+
+               cx = self.prev_center[0] + dx
+               cy = self.prev_center[1] + dy
+
+               dx *= 0.8
+               dy *= 0.8
+
+               if cx < 0 or cx > frame.shape[1] or cy < 0 or cy > frame.shape[0]:
+                   return {1: self.prev_bbox}
+
+               size = 10
+               bbox = (cx - size, cy - size, cx + size, cy + size)
+
+               self.prev_center = (cx, cy)
+               self.prev_bbox = bbox
+
+               return {1: bbox}
+           
+           return {1: self.prev_bbox}
         
         if len(filtered_boxes) > 0:
             boxes_to_use = filtered_boxes
@@ -150,17 +175,15 @@ class BallTracker:
 
             cx = alpha * self.prev_center[0] + (1 - alpha) * cx
             cy = alpha * self.prev_center[1] + (1 - alpha) * cy
-            
+
         self.prev_center = (cx, cy)
+        self.centers.append((cx, cy))
 
         self.prev_bbox = (x1, y1, x2, y2)
 
         ball_dict[1] = (x1, y1, x2, y2)
 
         return ball_dict
-        
-
-
         
     
     def draw_bbboxes(self, video_frames, ball_detections, hits): # Bounding boxes
