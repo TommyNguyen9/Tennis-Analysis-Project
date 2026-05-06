@@ -15,6 +15,8 @@ class BallTracker:
         self.prev_bbox = None
         self.missed_frames = 0
         self.hit_frames = set()
+        self.hit_cooldown = 0
+
 
         print("Model:", self.model.model_name if hasattr(self.model, "model_name") else self.model)
 
@@ -42,6 +44,11 @@ class BallTracker:
         self.fake_ball_pos = None
 
         for i, frame in enumerate(frames):
+            print(f"\n--- FRAME {i} ---")
+
+            if i in self.hit_frames:
+                self.hit_cooldown = 5
+
             ball_dict = self.detect_frame(frame, i)
             ball_detections.append(ball_dict)
 
@@ -64,7 +71,7 @@ class BallTracker:
 
     def detect_hits(self, movements):
         hits = [0]
-
+    
         for i in range(1, len(movements)):
             dx_prev, dy_prev = movements[i-1]
             dx_curr, dy_curr = movements[i]
@@ -81,9 +88,9 @@ class BallTracker:
         if frame_idx in self.hit_frames:
             self.prev_center = None
 
-        results = self.model.predict(frame, conf = 0.25)[0]
+        results = self.model.predict(frame, conf = 0.06)[0]
 
-        MAX_DIST = 250
+        MAX_DIST = 140
         MAX_DIST_SQ = MAX_DIST ** 2
         
         print("Boxes detected:", 0 if results.boxes is None else len(results.boxes))
@@ -113,14 +120,15 @@ class BallTracker:
             w_box = x2 - x1
             h_box = y2 - y1
 
-            print(f"w: {w_box:.1f}, h: {h_box:1f}")
 
             cx = (x1 + x2) / 2
             cy = (y1 + y2) / 2
 
-            print(f"RAW -> w:{w_box:.1f}, h:{h_box:.1f}, cx:{cx:.1f}, cy:{cy:.1f}")
+            # Rejecting the edge detections
+            if cx < w * 0.08 or cx > w * 0.92:
+                continue
 
-            if w_box > 80 or h_box > 80:
+            if w_box > 30 or h_box > 30:
                 continue
 
             ratio = w_box / h_box if h_box != 0 else 0
@@ -193,6 +201,7 @@ class BallTracker:
 
             for b in boxes_to_use:
                 cx, cy = get_center(b)
+                print(f"Candidate center: ({cx:.1f}, {cy:.1f})")
 
                 dx = cx - self.prev_center[0]
                 dy = cy - self.prev_center[1]
@@ -201,7 +210,13 @@ class BallTracker:
         
                 dist = (cx - self.prev_center[0]) ** 2 + (cy - self.prev_center[1]) ** 2
 
-                if dist < MAX_DIST_SQ and dist < best_dist and direction_score >= 0:
+                if self.hit_cooldown > 0:
+                    score = dist
+                    self.hit_cooldown -= 1
+                else:
+                    score = dist - direction_score * 0.5
+
+                if score < best_dist:
                     best_dist = dist
                     best_box = b
             
