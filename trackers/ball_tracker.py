@@ -92,8 +92,21 @@ class BallTracker:
             dx_prev, dy_prev = movements[i-1]
             dx_curr, dy_curr = movements[i]
 
-            if dx_curr * dx_prev < 0:
-                # print("Hit detected at index:", i)
+            MIN_HIT_SPEED = 20
+
+            if (dx_curr * dx_prev < 0
+                 and abs(dx_prev) > MIN_HIT_SPEED
+                 and abs(dx_curr) > MIN_HIT_SPEED
+            ):
+
+                print(
+                    f"HIT -> frame:{i}, "
+                    f"dx_prev:{dx_prev:.1f}, "
+                    f"dx_curr:{dx_curr:.1f}, "
+                    f"dy_prev:{dy_prev:.1f}, "
+                    f"dy_curr:{dy_curr:.1f}"
+                )
+
                 hits.append(1)
             else:
                 hits.append(0)
@@ -108,6 +121,7 @@ class BallTracker:
 
         if frame_idx in self.hit_frames:
             self.prev_center = None
+            self.centers = []
 
         results = self.model.predict(frame, conf = 0.01)[0]
 
@@ -253,12 +267,10 @@ class BallTracker:
                 if self.hit_cooldown == 0 and movement_dist > 120:
                     continue
 
-             
-        
                 dist = (cx - pred_x)**2 + (cy - pred_y)**2
 
                 if self.hit_cooldown > 0:
-                    score = dist
+                    continue
                    
                 else:
                     score = dist - direction_score * 0.3
