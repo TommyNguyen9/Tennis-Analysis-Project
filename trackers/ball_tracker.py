@@ -9,7 +9,7 @@ print("Running file:", __file__)
 
 class BallTracker:
     def __init__(self, model_path):
-        self.model = YOLO("models/yolo5_best.pt")
+        self.model = YOLO("models/yolov8n.pt")
         self.prev_center = None
 
         self.centers = []
@@ -93,7 +93,7 @@ class BallTracker:
             dx_curr, dy_curr = movements[i]
 
             if dx_curr * dx_prev < 0:
-                print("Hit detected at index:", i)
+                # print("Hit detected at index:", i)
                 hits.append(1)
             else:
                 hits.append(0)
@@ -145,20 +145,21 @@ class BallTracker:
             cx = (x1 + x2) / 2
             cy = (y1 + y2) / 2
 
+
             # Rejecting the edge detections
-            # if cx < w * 0.08 or cx > w * 0.92:
-            #     continue
+            if cx < w * 0.08 or cx > w * 0.92:
+                continue
 
             if w_box > 30 or h_box > 30:
                 continue
 
-            # ratio = w_box / h_box if h_box != 0 else 0
+            ratio = w_box / h_box if h_box != 0 else 0
 
-            # if ratio < 0.5 or ratio > 2:
-            #     continue
+            if ratio < 0.5 or ratio > 2:
+                continue
 
-            # if cy < h * 0.25:
-            #     continue
+            if cy < h * 0.25:
+                continue
 
             filtered_boxes.append(b)
 
@@ -221,13 +222,38 @@ class BallTracker:
 
 
             for b in boxes_to_use:
-                cx, cy = get_center(b)
-                print(f"Candidate center: ({cx:.1f}, {cy:.1f})")
+                conf = float(b.conf)
 
+                if conf < 0.15:
+                    continue
+
+                cx, cy = get_center(b)
+
+                if cy > h * 0.68:
+                    continue
+             
                 dx = cx - self.prev_center[0]
                 dy = cy - self.prev_center[1]
 
+                movement_dist = (dx**2 + dy**2) ** 0.5
+
                 direction_score = dx * prev_dx + dy * prev_dy
+
+                direction_score = max(min(direction_score, 200), -200)
+
+                print(
+                    f"CANDIDATE -> "
+                    f"cx:{cx:.1f}, cy:{cy:.1f}, "
+                    f"move:{movement_dist:.1f}, "
+                    f"conf:{conf:.2f}, "
+                    f"dir:{direction_score:.1f}"
+                    )
+
+           
+                if self.hit_cooldown == 0 and movement_dist > 120:
+                    continue
+
+             
         
                 dist = (cx - pred_x)**2 + (cy - pred_y)**2
 
@@ -235,7 +261,7 @@ class BallTracker:
                     score = dist
                    
                 else:
-                    score = dist - direction_score * 0.5
+                    score = dist - direction_score * 0.3
 
                 if score < best_dist:
                     best_dist = score
