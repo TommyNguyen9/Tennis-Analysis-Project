@@ -3,24 +3,40 @@ import cv2
 import pickle
 import random
 import pandas as pd
+import numpy as np
 
 print("Running file:", __file__)
 
 class BallTracker:
     def __init__(self, model_path):
-        self.model = YOLO("yolov8n.pt")
+        self.model = YOLO("models/yolo5_best.pt")
         self.prev_center = None
 
         self.centers = []
         self.prev_bbox = None
+
         self.missed_frames = 0
         self.hit_frames = set()
         self.hit_cooldown = 0
 
+        self.kalman = cv2.KalmanFilter(4, 2)
 
-        print("Model:", self.model.model_name if hasattr(self.model, "model_name") else self.model)
+        self.kalman.measurementMatrix = np.array([
+            [1, 0, 0, 0],
+            [0, 1, 0, 0]
+        ], np.float32)
 
-        
+        self.kalman.transitionMatrix = np.array([
+            [1, 0, 1, 0],
+            [0, 1, 0, 1],
+            [0, 0, 1, 0],
+            [0, 0, 0, 1]
+        ], np.float32)
+
+        self.kalman.processNoiseCov = np.eye(4, dtype = np.float32) * 0.03
+
+
+
     def interpolate_ball_positions(self, ball_positions):
         ball_positions = [x.get(1,[]) for x in ball_positions]
         # Convert list -> pandas DF:
@@ -85,10 +101,15 @@ class BallTracker:
         return hits
 
     def detect_frame(self, frame, frame_idx):
+        prediction = self.kalman.predict()
+
+        pred_x = prediction[0][0]
+        pred_y = prediction[1][0]
+
         if frame_idx in self.hit_frames:
             self.prev_center = None
 
-        results = self.model.predict(frame, conf = 0.06)[0]
+        results = self.model.predict(frame, conf = 0.01)[0]
 
         MAX_DIST = 140
         MAX_DIST_SQ = MAX_DIST ** 2
@@ -125,19 +146,19 @@ class BallTracker:
             cy = (y1 + y2) / 2
 
             # Rejecting the edge detections
-            if cx < w * 0.08 or cx > w * 0.92:
-                continue
+            # if cx < w * 0.08 or cx > w * 0.92:
+            #     continue
 
             if w_box > 30 or h_box > 30:
                 continue
 
-            ratio = w_box / h_box if h_box != 0 else 0
+            # ratio = w_box / h_box if h_box != 0 else 0
 
-            if ratio < 0.5 or ratio > 2:
-                continue
+            # if ratio < 0.5 or ratio > 2:
+            #     continue
 
-            if cy < h * 0.25:
-                continue
+            # if cy < h * 0.25:
+            #     continue
 
             filtered_boxes.append(b)
 
@@ -208,18 +229,21 @@ class BallTracker:
 
                 direction_score = dx * prev_dx + dy * prev_dy
         
-                dist = (cx - self.prev_center[0]) ** 2 + (cy - self.prev_center[1]) ** 2
+                dist = (cx - pred_x)**2 + (cy - pred_y)**2
 
                 if self.hit_cooldown > 0:
                     score = dist
-                    self.hit_cooldown -= 1
+                   
                 else:
                     score = dist - direction_score * 0.5
 
                 if score < best_dist:
-                    best_dist = dist
+                    best_dist = score
                     best_box = b
-            
+
+            if self.hit_cooldown > 0:
+                self.hit_cooldown -= 1
+
             if best_box is None:
                 self.missed_frames += 1
 
@@ -242,6 +266,9 @@ class BallTracker:
         # Updating Tracking:
 
         cx, cy = (x1 + x2) / 2, (y1 + y2) / 2
+
+        measurement = np.array([[np.float32(cx)], [np.float32(cy)]])
+        self.kalman.correct(measurement)
         
         if self.prev_center is not None:
             dx = cx - self.prev_center[0]
