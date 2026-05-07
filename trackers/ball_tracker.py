@@ -99,13 +99,13 @@ class BallTracker:
                  and abs(dx_curr) > MIN_HIT_SPEED
             ):
 
-                print(
-                    f"HIT -> frame:{i}, "
-                    f"dx_prev:{dx_prev:.1f}, "
-                    f"dx_curr:{dx_curr:.1f}, "
-                    f"dy_prev:{dy_prev:.1f}, "
-                    f"dy_curr:{dy_curr:.1f}"
-                )
+                # print(
+                #     f"HIT -> frame:{i}, "
+                #     f"dx_prev:{dx_prev:.1f}, "
+                #     f"dx_curr:{dx_curr:.1f}, "
+                #     f"dy_prev:{dy_prev:.1f}, "
+                #     f"dy_curr:{dy_curr:.1f}"
+                # )
 
                 hits.append(1)
             else:
@@ -123,7 +123,7 @@ class BallTracker:
             self.prev_center = None
             self.centers = []
 
-        results = self.model.predict(frame, conf = 0.01)[0]
+        results = self.model.predict(frame, conf = 0.2)[0]
 
         MAX_DIST = 140
         MAX_DIST_SQ = MAX_DIST ** 2
@@ -152,6 +152,19 @@ class BallTracker:
             #     continue
 
             x1, y1, x2, y2 = b.xyxy.tolist()[0]
+
+            conf = float(b.conf)
+
+            cv2.rectangle(
+                frame,
+                (int(x1), int(y1)),
+                (int(x2), int(y2)),
+                (0, 255, 0), 1
+            )
+
+            cv2.putText(frame, f"{conf:.2f}", (int(x1), int(y1) - 5),
+                                               cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 255, 0), 1)
+
             w_box = x2 - x1
             h_box = y2 - y1
 
@@ -180,6 +193,9 @@ class BallTracker:
     
         if self.prev_center is not None and len(filtered_boxes) == 0:
            
+           print("USING PREDICTION")
+
+       
            if len(self.centers) >= 3:
                
                dx1 = self.centers[-1][0] - self.centers[-2][0]
@@ -230,7 +246,9 @@ class BallTracker:
             if self.prev_bbox is None:
                 return {}
             
+            print("USING PREV BBOX")
             return {1: self.prev_bbox}
+          
 
            
         if self.prev_center is not None:
@@ -264,25 +282,26 @@ class BallTracker:
 
                 direction_score = max(min(direction_score, 200), -200)
 
-                print(
-                    f"CANDIDATE -> "
-                    f"cx:{cx:.1f}, cy:{cy:.1f}, "
-                    f"move:{movement_dist:.1f}, "
-                    f"conf:{conf:.2f}, "
-                    f"dir:{direction_score:.1f}"
-                    )
+                if 205 <= frame_idx <= 215:
+                    print(
+                        f"CANDIDATE -> "
+                        f"cx:{cx:.1f}, cy:{cy:.1f}, "
+                        f"move:{movement_dist:.1f}, "
+                        f"conf:{conf:.2f}, "
+                        f"dir:{direction_score:.1f}"
+                        )
 
            
-                if self.hit_cooldown == 0 and movement_dist > 120:
-                    continue
+                # if self.hit_cooldown == 0 and movement_dist > 250:
+                #     continue
 
                 dist = (cx - pred_x)**2 + (cy - pred_y)**2
 
                 if self.hit_cooldown > 0:
-                    continue
+                    score = dist
                    
                 else:
-                    score = dist - direction_score * 0.3
+                    score = dist - direction_score * 0.3 - conf * 400
 
                 if score < best_dist:
                     best_dist = score
@@ -300,8 +319,9 @@ class BallTracker:
                     return {}
 
                 return {1: self.prev_bbox}
-
-            print(f"Selected -> {get_center(best_box)} | Dist: {best_dist:.1f}")
+            
+            if 205 <= frame_idx <= 215:
+             print(f"Selected -> {get_center(best_box)} | Dist: {best_dist:.1f}")
 
         else:
             best_box = max(boxes_to_use, key = lambda b: float(b.conf))
@@ -353,6 +373,7 @@ class BallTracker:
 
             # Drawing bounding boxes:
             for track_id, bbox in ball_dict.items():
+                print(bbox)
                 if bbox is None or len(bbox) != 4:
                     continue
                 x1, y1, x2, y2 = bbox               
