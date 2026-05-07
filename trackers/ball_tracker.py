@@ -9,7 +9,7 @@ print("Running file:", __file__)
 
 class BallTracker:
     def __init__(self, model_path):
-        self.model = YOLO("models/yolov8n.pt")
+        self.model = YOLO("models/best.pt")
         self.prev_center = None
 
         self.centers = []
@@ -179,31 +179,40 @@ class BallTracker:
 
     
         if self.prev_center is not None and len(filtered_boxes) == 0:
-           if len(self.centers) >= 2:
+           
+           if len(self.centers) >= 3:
+               
+               dx1 = self.centers[-1][0] - self.centers[-2][0]
+               dy1 = self.centers[-1][1] - self.centers[-2][1]
+
+               dx2 = self.centers[-2][0] - self.centers[-3][0]
+               dy2 = self.centers[-2][1] - self.centers[-3][1]
+
+               dx = (dx1+ dx2) / 2
+               dy = (dy1 + dy2) / 2
+
+           else:
                dx = self.centers[-1][0] - self.centers[-2][0]
                dy = self.centers[-1][1] - self.centers[-2][1]
 
-               max_speed = 20
+           max_speed = 40
 
-               dx = max(-max_speed, min(max_speed, dx))
-               dy = max(-max_speed, min(max_speed, dy))
+           dx = max(-max_speed, min(max_speed, dx))
+           dy = max(-max_speed, min(max_speed, dy))
 
-               cx = self.prev_center[0] + dx
-               cy = self.prev_center[1] + dy
+           cx = self.prev_center[0] + dx
+           cy = self.prev_center[1] + dy
 
-               dx *= 0.8
-               dy *= 0.8
+           if cx < 0 or cx > frame.shape[1] or cy < 0 or cy > frame.shape[0]:
+              return {1: self.prev_bbox} if self.prev_bbox is not None else {}
 
-               if cx < 0 or cx > frame.shape[1] or cy < 0 or cy > frame.shape[0]:
-                   return {1: self.prev_bbox} if self.prev_bbox is not None else {}
+           size = 10
+           bbox = (cx - size, cy - size, cx + size, cy + size)
 
-               size = 10
-               bbox = (cx - size, cy - size, cx + size, cy + size)
+           self.prev_center = (cx, cy)
+           self.prev_bbox = bbox
 
-               self.prev_center = (cx, cy)
-               self.prev_bbox = bbox
-
-               return {1: bbox}
+           return {1: bbox}
         
         if len(filtered_boxes) == 0:
             boxes_to_use = []
