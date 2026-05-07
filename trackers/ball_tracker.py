@@ -270,6 +270,9 @@ class BallTracker:
 
                 cx, cy = get_center(b)
 
+                if 930 < cx < 980 and 280 < cy < 330:
+                    continue
+
                 if cy > h * 0.68:
                     continue
              
@@ -277,6 +280,9 @@ class BallTracker:
                 dy = cy - self.prev_center[1]
 
                 movement_dist = (dx**2 + dy**2) ** 0.5
+
+                if movement_dist < 2 and conf < 0.5:
+                    continue
 
                 direction_score = dx * prev_dx + dy * prev_dy
 
@@ -373,7 +379,6 @@ class BallTracker:
 
             # Drawing bounding boxes:
             for track_id, bbox in ball_dict.items():
-                print(bbox)
                 if bbox is None or len(bbox) != 4:
                     continue
                 x1, y1, x2, y2 = bbox               
