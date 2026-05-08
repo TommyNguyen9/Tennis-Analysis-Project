@@ -276,8 +276,8 @@ class BallTracker:
                 # print(f"RAW -> " f"cx:{cx:.1f}, " f"cy:{cy:1f}, " f"conf:{float(b.conf):.2f}")
 
             
-                if 930 < cx < 980 and 280 < cy < 330:
-                    continue
+                # if 930 < cx < 980 and 280 < cy < 330:
+                #     continue
 
                 if cy > h * 0.68:
                     continue
@@ -287,17 +287,17 @@ class BallTracker:
 
                 movement_dist = (dx**2 + dy**2) ** 0.5
 
-                
-                if movement_dist < 5:
-                    continue
+               
+                # if movement_dist < 5:
+                #     continue
 
                 pred_dx = cx - pred_x
                 pred_dy = cy - pred_y
 
                 prediction_dist = (pred_dx**2 + pred_dy**2) ** 0.5
 
-                if prediction_dist > 120:
-                    continue
+                # if prediction_dist > 120:
+                #     continue
 
                 direction_score = (dx * prev_dx + dy * prev_dy) * 0.2
 
@@ -325,7 +325,7 @@ class BallTracker:
                 else:
                     score = dist * 0.3 - direction_score * 0.3 - conf * 400
 
-                    score += movement_dist * 2
+                    score += movement_dist * 0.2
 
                 if score < best_dist:
                     best_dist = score
@@ -335,6 +335,7 @@ class BallTracker:
                 self.hit_cooldown -= 1
 
             if best_box is None:
+                print(f"LOST TARGET -> frame {frame_idx}")
                 self.missed_frames += 1
 
                 # self.prev_center = None
