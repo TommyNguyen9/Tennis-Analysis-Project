@@ -296,7 +296,7 @@ class BallTracker:
 
                 prediction_dist = (pred_dx**2 + pred_dy**2) ** 0.5
 
-                if prediction_dist > 80:
+                if prediction_dist > 120:
                     continue
 
                 direction_score = (dx * prev_dx + dy * prev_dy) * 0.2
