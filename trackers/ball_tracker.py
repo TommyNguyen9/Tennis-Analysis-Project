@@ -270,6 +270,10 @@ class BallTracker:
 
                 cx, cy = get_center(b)
 
+                print(f"RAW -> " f"cx:{cx:.1f}, " f"cy:{cy:1f}, " f"conf:{float(b.conf):.2f}")
+
+              
+
                 if 930 < cx < 980 and 280 < cy < 330:
                     continue
 
@@ -281,10 +285,19 @@ class BallTracker:
 
                 movement_dist = (dx**2 + dy**2) ** 0.5
 
-                if movement_dist < 2 and conf < 0.5:
+                
+                if movement_dist < 5:
                     continue
 
-                direction_score = dx * prev_dx + dy * prev_dy
+                pred_dx = cx - pred_x
+                pred_dy = cy - pred_y
+
+                prediction_dist = (pred_dx**2 + pred_dy**2) ** 0.5
+
+                if prediction_dist > 80:
+                    continue
+
+                direction_score = (dx * prev_dx + dy * prev_dy) * 0.2
 
                 direction_score = max(min(direction_score, 200), -200)
 
@@ -293,6 +306,7 @@ class BallTracker:
                         f"CANDIDATE -> "
                         f"cx:{cx:.1f}, cy:{cy:.1f}, "
                         f"move:{movement_dist:.1f}, "
+                        f"pred:{prediction_dist:.1f}, "
                         f"conf:{conf:.2f}, "
                         f"dir:{direction_score:.1f}"
                         )
@@ -307,7 +321,9 @@ class BallTracker:
                     score = dist
                    
                 else:
-                    score = dist - direction_score * 0.3 - conf * 400
+                    score = dist * 0.3 - direction_score * 0.3 - conf * 400
+
+                    score += movement_dist * 2
 
                 if score < best_dist:
                     best_dist = score
