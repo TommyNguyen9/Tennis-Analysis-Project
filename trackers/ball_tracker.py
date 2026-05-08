@@ -155,15 +155,15 @@ class BallTracker:
 
             conf = float(b.conf)
 
-            cv2.rectangle(
-                frame,
-                (int(x1), int(y1)),
-                (int(x2), int(y2)),
-                (0, 255, 0), 1
-            )
+            # cv2.rectangle(
+            #     frame,
+            #     (int(x1), int(y1)),
+            #     (int(x2), int(y2)),
+            #     (0, 255, 0), 1
+            # )
 
-            cv2.putText(frame, f"{conf:.2f}", (int(x1), int(y1) - 5),
-                                               cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 255, 0), 1)
+            # cv2.putText(frame, f"{conf:.2f}", (int(x1), int(y1) - 5),
+            #                                    cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 255, 0), 1)
 
             w_box = x2 - x1
             h_box = y2 - y1
@@ -207,9 +207,12 @@ class BallTracker:
                dx = (dx1+ dx2) / 2
                dy = (dy1 + dy2) / 2
 
-           else:
+           elif len(self.centers) >= 2:
                dx = self.centers[-1][0] - self.centers[-2][0]
                dy = self.centers[-1][1] - self.centers[-2][1]
+            
+           else: 
+               dx, dy = 0, 0
 
            max_speed = 40
 
@@ -247,7 +250,7 @@ class BallTracker:
                 return {}
             
             print("USING PREV BBOX")
-            return {1: self.prev_bbox}
+            return {}
           
 
            
@@ -270,10 +273,9 @@ class BallTracker:
 
                 cx, cy = get_center(b)
 
-                print(f"RAW -> " f"cx:{cx:.1f}, " f"cy:{cy:1f}, " f"conf:{float(b.conf):.2f}")
+                # print(f"RAW -> " f"cx:{cx:.1f}, " f"cy:{cy:1f}, " f"conf:{float(b.conf):.2f}")
 
-              
-
+            
                 if 930 < cx < 980 and 280 < cy < 330:
                     continue
 
@@ -335,19 +337,19 @@ class BallTracker:
             if best_box is None:
                 self.missed_frames += 1
 
-                self.prev_center = None
+                # self.prev_center = None
 
                 if self.prev_bbox is None:
                     return {}
 
-                return {1: self.prev_bbox}
+                return {}
             
-            if 205 <= frame_idx <= 215:
-             print(f"Selected -> {get_center(best_box)} | Dist: {best_dist:.1f}")
+            # if 205 <= frame_idx <= 215:
+            #  print(f"Selected -> {get_center(best_box)} | Dist: {best_dist:.1f}")
 
         else:
             best_box = max(boxes_to_use, key = lambda b: float(b.conf))
-            
+                        
         
         # Extracting coordinates:
         x1, y1, x2, y2 = best_box.xyxy.tolist()[0]    
@@ -373,8 +375,22 @@ class BallTracker:
 
             cx = alpha * self.prev_center[0] + (1 - alpha) * cx
             cy = alpha * self.prev_center[1] + (1 - alpha) * cy
+            
+            # Smoothing the bounding box:
+            if self.prev_bbox is not None:
+
+                prev_x1, prev_y1, prev_x2, prev_y2 = self.prev_bbox
+
+                x1 = alpha * prev_x1 + (1 - alpha) * x1
+                y1 = alpha * prev_y1 + (1 - alpha) * y1
+                x2 = alpha * prev_x2 + (1 - alpha) * x2
+                y2 = alpha * prev_y2 + (1 - alpha) * y2
+
 
         self.prev_center = (cx, cy)
+        
+        print(f"TRACKED CENTER -> {self.prev_center}")
+
         self.centers.append((cx, cy))
 
         self.prev_bbox = (x1, y1, x2, y2)
