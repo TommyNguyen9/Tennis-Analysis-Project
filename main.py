@@ -37,7 +37,7 @@ def main():
 
     hits = [0] + hits
     
-    # ball_detections = ball_tracker.interpolate_ball_positions(ball_detections)
+    ball_detections = ball_tracker.interpolate_ball_positions(ball_detections)
     
     # Court Line Detector model:
 
@@ -52,6 +52,11 @@ def main():
     # MiniCourt:
 
     mini_court = MiniCourt(video_frames[0])
+
+    # Detecting ball shots:
+
+    ball_shot_frames = ball_tracker.get_ball_shot_frames(ball_detections)
+    print(ball_shot_frames)
 
     # Draw outputs:
 
