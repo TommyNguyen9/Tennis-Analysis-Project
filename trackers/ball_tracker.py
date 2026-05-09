@@ -420,7 +420,15 @@ class BallTracker:
             for track_id, bbox in ball_dict.items():
                 if bbox is None or len(bbox) != 4:
                     continue
-                x1, y1, x2, y2 = bbox               
+                x1, y1, x2, y2 = bbox
+
+                print("RAW BBOX:", bbox)
+
+                cx = (x1 + x2) / 2
+                cy = (y1 + y2) / 2
+
+                print("Center:", cx, cy)    
+
                 cv2.putText(frame, f"Ball ID: {track_id}", (int(bbox[0]), int(bbox[1] - 10)), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 0, 255), 2)
                 cv2.rectangle(frame, (int(x1), int(y1)), (int(x2), int(y2)), (0, 255, 255), 2)
 
