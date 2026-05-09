@@ -20,12 +20,12 @@ def main():
 
     player_detections = player_tracker.detect_frames(video_frames, 
                                                      read_from_stub = True,
-                                                     stub_path = "tracker_stubs/player_detections.pk1"
+                                                     stub_path = "tracker_stubs/player_detections.pkl"
                                                      )
     
     ball_detections = ball_tracker.detect_frames(video_frames, 
-                                                     read_from_stub = True,
-                                                     stub_path = "tracker_stubs/ball_detections.pk1"
+                                                     read_from_stub = False,
+                                                     stub_path = "tracker_stubs/ball_detections.pkl"
                                                      )
     
     movements = ball_tracker.compute_movement()

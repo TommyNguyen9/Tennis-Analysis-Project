@@ -68,6 +68,10 @@ class BallTracker:
             ball_dict = self.detect_frame(frame, i)
             ball_detections.append(ball_dict)
 
+        if stub_path is not None:
+            with open(stub_path, "wb") as f:
+                pickle.dump(ball_detections, f)
+
 
         return ball_detections
     
