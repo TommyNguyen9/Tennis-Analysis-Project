@@ -287,9 +287,15 @@ class BallTracker:
 
                 movement_dist = (dx**2 + dy**2) ** 0.5
 
-               
-                # if movement_dist < 5:
-                #     continue
+                if conf > 0.6 and movement_dist > 150:
+                    best_box = b
+                    break
+
+                if movement_dist > 120 and conf < 0.5:
+                    continue
+
+                if movement_dist < 5:
+                    continue
 
                 pred_dx = cx - pred_x
                 pred_dy = cy - pred_y
