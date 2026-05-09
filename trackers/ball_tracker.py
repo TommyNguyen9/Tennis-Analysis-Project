@@ -276,8 +276,8 @@ class BallTracker:
                 # print(f"RAW -> " f"cx:{cx:.1f}, " f"cy:{cy:1f}, " f"conf:{float(b.conf):.2f}")
 
             
-                # if 930 < cx < 980 and 280 < cy < 330:
-                #     continue
+                if 930 < cx < 980 and 280 < cy < 330:
+                    continue
 
                 if cy > h * 0.68:
                     continue
@@ -287,11 +287,14 @@ class BallTracker:
 
                 movement_dist = (dx**2 + dy**2) ** 0.5
 
+                if abs(dy) < 2 and movement_dist > 150:
+                   continue
+
                 if conf > 0.6 and movement_dist > 150:
                     best_box = b
                     break
 
-                if movement_dist > 120 and conf < 0.5:
+                if movement_dist > 180 and conf < 0.5:
                     continue
 
                 if movement_dist < 5:
