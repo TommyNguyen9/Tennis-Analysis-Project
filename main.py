@@ -57,7 +57,7 @@ def main():
 
     # Player bounding boxes:
 
-    # output_video_frames = player_tracker.draw_bbboxes(video_frames, player_detections)
+    output_video_frames = player_tracker.draw_bbboxes(video_frames, player_detections)
     output_video_frames = ball_tracker.draw_bbboxes(video_frames, ball_detections, hits)
 
     # Drawing the court:

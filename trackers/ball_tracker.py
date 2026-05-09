@@ -353,10 +353,7 @@ class BallTracker:
                     return {}
 
                 return {}
-            
-            # if 205 <= frame_idx <= 215:
-            #  print(f"Selected -> {get_center(best_box)} | Dist: {best_dist:.1f}")
-
+          
         else:
             best_box = max(boxes_to_use, key = lambda b: float(b.conf))
                         
