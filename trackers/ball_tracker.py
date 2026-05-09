@@ -102,15 +102,6 @@ class BallTracker:
                  and abs(dx_prev) > MIN_HIT_SPEED
                  and abs(dx_curr) > MIN_HIT_SPEED
             ):
-
-                # print(
-                #     f"HIT -> frame:{i}, "
-                #     f"dx_prev:{dx_prev:.1f}, "
-                #     f"dx_curr:{dx_curr:.1f}, "
-                #     f"dy_prev:{dy_prev:.1f}, "
-                #     f"dy_curr:{dy_curr:.1f}"
-                # )
-
                 hits.append(1)
             else:
                 hits.append(0)
@@ -158,16 +149,6 @@ class BallTracker:
             x1, y1, x2, y2 = b.xyxy.tolist()[0]
 
             conf = float(b.conf)
-
-            # cv2.rectangle(
-            #     frame,
-            #     (int(x1), int(y1)),
-            #     (int(x2), int(y2)),
-            #     (0, 255, 0), 1
-            # )
-
-            # cv2.putText(frame, f"{conf:.2f}", (int(x1), int(y1) - 5),
-            #                                    cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 255, 0), 1)
 
             w_box = x2 - x1
             h_box = y2 - y1
@@ -277,9 +258,6 @@ class BallTracker:
 
                 cx, cy = get_center(b)
 
-                # print(f"RAW -> " f"cx:{cx:.1f}, " f"cy:{cy:1f}, " f"conf:{float(b.conf):.2f}")
-
-            
                 if 930 < cx < 980 and 280 < cy < 330:
                     continue
 
@@ -309,9 +287,6 @@ class BallTracker:
 
                 prediction_dist = (pred_dx**2 + pred_dy**2) ** 0.5
 
-                # if prediction_dist > 120:
-                #     continue
-
                 direction_score = (dx * prev_dx + dy * prev_dy) * 0.2
 
                 direction_score = max(min(direction_score, 200), -200)
@@ -326,9 +301,6 @@ class BallTracker:
                         f"dir:{direction_score:.1f}"
                         )
 
-           
-                # if self.hit_cooldown == 0 and movement_dist > 250:
-                #     continue
 
                 dist = (cx - pred_x)**2 + (cy - pred_y)**2
 
@@ -350,8 +322,6 @@ class BallTracker:
             if best_box is None:
                 print(f"LOST TARGET -> frame {frame_idx}")
                 self.missed_frames += 1
-
-                # self.prev_center = None
 
                 if self.prev_bbox is None:
                     return {}
