@@ -203,7 +203,13 @@ class MiniCourt():
 
         mini_court_x_distance_pixels = self.convert_meters_to_pixels(distance_from_keypoint_x_meters)
         mini_court_y_distance_pixels = self.convert_meters_to_pixels(distance_from_keypoint_y_meters)
+        closest_mini_court_keypoint = (self.drawing_key_points[closest_key_point_index * 2],
+                                       self.drawing_key_points[closest_key_point_index * 2] + 1)
+    
+        mini_court_player_position = (closest_mini_court_keypoint[0] + mini_court_x_distance_pixels,
+                                      closest_mini_court_keypoint[1] + mini_court_y_distance_pixels)
         
+        return mini_court_player_position
 
 
 
@@ -230,6 +236,12 @@ class MiniCourt():
                frame_index_max = min(len(player_boxes), frame_num + 50)
                bboxes_heights_in_pixels = [get_height_of_bbox(player_bbox[i]) for i in range (frame_index_min, frame_index_max)]
                max_player_height_in_pixels = max(bboxes_heights_in_pixels)
+
+               mini_court_player_position = self.get_mini_court_coordinates(foot_position, closest_key_point,
+                                                                            closest_key_point_index, max_player_height_in_pixels,
+                                                                            player_heights[player_id])
+               
+               
 
         
                
