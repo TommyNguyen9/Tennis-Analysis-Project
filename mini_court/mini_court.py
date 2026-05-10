@@ -4,7 +4,8 @@ import numpy as np
 sys.path.append('../')
 import constants
 from utils import (convert_meters_to_pixel_distance, convert_pixel_distance_to_meters,
-                   get_foot_position, get_closest_keypoint_index)
+                   get_foot_position, get_closest_keypoint_index, get_height_of_bbox,
+                   measure_xy_distance)
 
 
 
@@ -181,13 +182,37 @@ class MiniCourt():
     
     def get_court_drawing_keypoints(self):
         return self.drawing_key_points
+
+    def get_mini_court_coordinates(self, object_position, closest_key_point, 
+                                   closest_key_point_index, player_height_in_pixels,
+                                   player_height_in_meters):
+        
+        distance_from_keypoint_x_pixels, distance_from_keypoint_y_pixels = measure_xy_distance(object_position, closest_key_point)
+
+        # Convert pixel distance to meters: 
+
+        distance_from_keypoint_x_meters = convert_pixel_distance_to_meters(distance_from_keypoint_x_pixels,
+                                                                           player_height_in_meters,
+                                                                           player_height_in_pixels)
+        
+        distance_from_keypoint_y_meters = convert_pixel_distance_to_meters(distance_from_keypoint_y_pixels,
+                                                                           player_height_in_meters,
+                                                                           player_height_in_pixels)
     
+        # Convert to mini court coords:
+
+        mini_court_x_distance_pixels = self.convert_meters_to_pixels(distance_from_keypoint_x_meters)
+        mini_court_y_distance_pixels = self.convert_meters_to_pixels(distance_from_keypoint_y_meters)
+        
+
+
+
     def convert_bounding_boxes_to_mini_court_coordinates(self, player_boxes, ball_boxes, original_court_key_points):
         player_heights = {
             1: constants.PLAYER_1_HEIGHT_METERS,
             2: constants.PLAYER_2_HEIGHT_METERS
         }
-
+    
         output_player_boxes = []
         output_ball_boxes = []
 
@@ -196,6 +221,21 @@ class MiniCourt():
                foot_position = get_foot_position(bbox)
 
                # Measuring closest keypoint in pixels:
-               closet_key_point_index = get_closest_keypoint_index(foot_position, original_court_key_points, [0, 2, 12, 13])
+               closest_key_point_index = get_closest_keypoint_index(foot_position, original_court_key_points, [0, 2, 12, 13])
+               closest_key_point = (original_court_key_points[closest_key_point_index * 2],
+                                    original_court_key_points[closest_key_point_index * 2 + 1])
+
+               # Get player height in pixels:
+               frame_index_min = max(0, frame_num - 20)
+               frame_index_max = min(len(player_boxes), frame_num + 50)
+               bboxes_heights_in_pixels = [get_height_of_bbox(player_bbox[i]) for i in range (frame_index_min, frame_index_max)]
+               max_player_height_in_pixels = max(bboxes_heights_in_pixels)
+
+        
+               
+
+
+ 
+
 
 

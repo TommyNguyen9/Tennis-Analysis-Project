@@ -23,3 +23,10 @@ def get_closest_keypoint_index(point, keypoints, keypoint_indices):
             keypoint_ind = keypoint_idx
     
     return keypoint_ind
+
+def get_height_of_bbox(bbox):
+    return bbox[3] - bbox[1]
+
+def measure_xy_distance(p1, p2):
+    return abs(p1[0] - p2[0]), abs(p1[1] - p2[1])
+
