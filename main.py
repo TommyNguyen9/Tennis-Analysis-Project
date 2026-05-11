@@ -5,6 +5,9 @@ from trackers import PlayerTracker, BallTracker
 from court_line_detector.court_line_detector import CourtLineDetector
 from mini_court import MiniCourt
 import cv2
+from copy import deepcopy
+import pandas as pd
+
 
 def main():
     
@@ -62,6 +65,24 @@ def main():
 
     player_mini_court_detections, ball_mini_court_detections = mini_court.convert_bounding_boxes_to_mini_court_coordinates(player_detections, ball_detections, court_keypoints)
 
+    player_stats_data = [{
+        'frame_num':0,
+        'player_1_number_of_shots': 0,
+        'player_1_total_shot_speed': 0,
+        'player_1_last_shot_speed': 0,
+        'player_1_total_player_speed': 0,
+        'player_1_last_player_speed': 0,
+
+        'player_2_number_of_shots': 0,
+        'player_2_total_shot_speed': 0,
+        'player_2_last_shot_speed': 0,
+        'player_2_total_player_speed': 0,
+        'player_2_last_player_speed':0,
+
+    }
+
+    ]
+
     for ball_shot_idx in range(len(ball_shot_frames) - 1):
         start_frame = ball_shot_frames[ball_shot_idx]
         end_frame = ball_shot_frames[ball_shot_idx + 1]
@@ -92,11 +113,24 @@ def main():
         distance_covered_by_opponent_meters = mini_court.convert_pixels_to_meters(distance_covered_by_opponent_pixels)
 
         speed_of_opponent = distance_covered_by_opponent_meters/ball_shot_time_in_seconds * 3.6
-        
 
-        
+        current_player_stats = deepcopy(player_stats_data[-1])
+        current_player_stats['frame_num'] = start_frame
+        current_player_stats[f'player_{player_shot_ball}_number_of_shots'] += 1
+        current_player_stats[f'player_{player_shot_ball}_total_shot_speed'] += speed_of_ball_shot
+        current_player_stats[f'player_{player_shot_ball}_last_shot_speed'] = speed_of_ball_shot
 
+        current_player_stats[f'player_{opponent_player_id}_total_player_speed'] = speed_of_opponent
+        current_player_stats[f'player_{opponent_player_id}_last_player_speed'] = speed_of_opponent
 
+        player_stats_data.append(current_player_stats)
+
+    player_stats_data_df = pd.DataFrame(player_stats_data)
+    frames_df = pd.DataFrame({'frame_num':list(range(len(video_frames)))})
+    player_stats_data_df = pd.merge(frames_df, player_stats_data_df, on = 'frame_num', how = 'left')
+    player_stats_data_df = player_stats_data_df.ffill()
+
+    player_stats_data_df["player_1_average_shot_speed"] = player_stats_data_df['player_1_total_shot_speed'] / player_stats_data_df['player_1_number_of_shots']
 
     # Draw outputs:
 
