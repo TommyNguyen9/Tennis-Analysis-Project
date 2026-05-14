@@ -2,6 +2,7 @@ import torch
 import torchvision.transforms as transforms
 import cv2
 import torchvision.models as models
+import numpy as np
 
 class CourtLineDetector:
 
@@ -34,6 +35,33 @@ class CourtLineDetector:
         keypoints[1::2] *= original_h/ 224.0
 
         return keypoints
+    
+    def get_point(self, keypoints, idx):
+        return np.array([keypoints[idx *2], keypoints[idx * 2 + 1]], dtype = float)
+    
+    def set_point(self, keypoints, idx, point):
+        keypoints[idx * 2] = point[0]
+        keypoints[idx * 2 + 1] = point[1]
+
+    def line_from_points(self, p1, p2):
+        return np.cross(
+            np.array([p1[0], p1[1], 1.0]),
+            np.array([p2[0], p2[1], 1.0])
+        )
+    
+    def intersection(self, line1, line2):
+        point = np.cross(line1, line2)
+
+        if abs(point[2]) < 1e-6:
+            return None
+        
+        return np.array([point[0] / point[2], point[1] / point[2]],
+                         dtype = float)
+    
+
+
+
+    
     
     def draw_keypoints(self, image, keypoints):
         for i in range(0, len(keypoints), 2):
