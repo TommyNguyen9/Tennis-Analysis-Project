@@ -34,6 +34,8 @@ class CourtLineDetector:
         keypoints[::2] *= original_w/ 224.0
         keypoints[1::2] *= original_h/ 224.0
 
+        keypoints = self.correct_keypoints_2_and_5(keypoints)
+
         return keypoints
     
     def get_point(self, keypoints, idx):
@@ -59,10 +61,31 @@ class CourtLineDetector:
                          dtype = float)
     
 
+    def correct_keypoints_2_and_5(self, keypoints):
+        p3 = self.get_point(keypoints, 3)
+        p7 = self.get_point(keypoints, 7)
+
+        # Tennis court proportions:
+
+        alley = 1.37 
+        singles_width = 8.23
+        doubles_width = 10.97
+
+        right_singles_fraction = (alley + singles_width) / doubles_width
+        left_singles_fraction = alley / doubles_width
+
+        # Solving equation for correct keypoint 2:
+
+        p2_new = (p7 - right_singles_fraction * p3) / (1 - right_singles_fraction)
+        p5_new = p2_new + left_singles_fraction * (p3 - p2_new)
+
+        self.set_point(keypoints, 2, p2_new)
+        self.set_point(keypoints, 5, p5_new)
 
 
-    
-    
+        return keypoints
+
+
     def draw_keypoints(self, image, keypoints):
         for i in range(0, len(keypoints), 2):
             x = int(keypoints[i])
