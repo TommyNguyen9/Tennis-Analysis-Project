@@ -79,10 +79,14 @@ class CourtLineDetector:
         p2_new = (p7 - right_singles_fraction * p3) / (1 - right_singles_fraction)
         p5_new = p2_new + left_singles_fraction * (p3 - p2_new)
 
+        p2_new[0] += 80
+        p5_new[0] += 60
+
+
         self.set_point(keypoints, 2, p2_new)
         self.set_point(keypoints, 5, p5_new)
 
-
+        
         return keypoints
 
 
