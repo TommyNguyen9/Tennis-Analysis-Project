@@ -132,7 +132,8 @@ def main():
 
     player_stats_data_df["player_1_average_shot_speed"] = player_stats_data_df['player_1_total_shot_speed'] / player_stats_data_df['player_1_number_of_shots']
     player_stats_data_df["player_2_average_shot_speed"] = player_stats_data_df['player_2_total_shot_speed'] / player_stats_data_df['player_2_number_of_shots']
-    player_stats_data_df['player_1_average_player_speed'] = player_stats_data_df['player_1_total_player_speed']/(player_stats_data_df['frame_num'] + 1)
+    player_stats_data_df['player_1_average_player_speed'] = player_stats_data_df['player_1_total_player_speed']/ player_stats_data_df['player_2_number_of_shots']
+    player_stats_data_df['player_2_average_player_speed'] = player_stats_data_df['player_2_total_player_speed']/ player_stats_data_df['player_1_number_of_shots']
 
     # Draw outputs:
 
