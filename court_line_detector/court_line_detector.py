@@ -35,6 +35,7 @@ class CourtLineDetector:
         keypoints[1::2] *= original_h/ 224.0
 
         keypoints = self.correct_keypoints_2_and_5(keypoints)
+        keypoints = self.correct_keypoint_10(keypoints)
 
         return keypoints
     
@@ -82,13 +83,30 @@ class CourtLineDetector:
         p2_new[0] += 80
         p5_new[0] += 60
 
-
         self.set_point(keypoints, 2, p2_new)
         self.set_point(keypoints, 5, p5_new)
-
         
         return keypoints
 
+    def correct_keypoint_10(self, keypoints):
+        p4 = self.get_point(keypoints, 4)
+        p5 = self.get_point(keypoints, 5)
+        p13 = self.get_point(keypoints, 13)
+        p11 = self.get_point(keypoints, 11)
+
+        left_singles_line = self.line_from_points(p4, p5)
+        bottom_service_line = self.line_from_points(p13, p11)
+
+        new_p10 = self.intersection(left_singles_line, bottom_service_line)
+
+        if new_p10 is not None:
+
+            new_p10[0] -= 10 # Move it slightly left
+            new_p10[1] += 13 #Move it slightly down.
+
+            self.set_point(keypoints, 10, new_p10)
+
+        return keypoints
 
     def draw_keypoints(self, image, keypoints):
         for i in range(0, len(keypoints), 2):
