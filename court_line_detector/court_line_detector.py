@@ -110,6 +110,10 @@ class CourtLineDetector:
         return keypoints
     
     def correct_keypoints_12_and_13(self, keypoints):
+        print("12/13 KEYPOINTS RUNNING")
+        print("OLD 12:", self.get_point(keypoints, 12))
+        print("OLD 13:", self.get_point(keypoints, 13))
+
         p4 = self.get_point(keypoints, 4)
         p5 = self.get_point(keypoints, 5)
         p6 = self.get_point(keypoints, 6)
@@ -121,6 +125,7 @@ class CourtLineDetector:
         p11 = self.get_point(keypoints, 11)
         p13 = self.get_point(keypoints, 13)
 
+    
         # Moving down the court:
 
         left_singles_line = self.line_from_points(p4, p5)
@@ -140,20 +145,21 @@ class CourtLineDetector:
         new_p12 = self.intersection(centre_service_line, top_service_line)
         new_p13 = self.intersection(centre_service_line, bottom_service_line)
 
+        print("NEW 12:", new_p12)
+        print("NEW 13:", new_p13)
+
         if new_p12 is not None:
+            new_p12[0] -= 14
+            new_p12[1] += 10
             self.set_point(keypoints, 12, new_p12)
 
         if new_p13 is not None:
+            new_p13[0] -= 21
+            new_p13[1] += 12
             self.set_point(keypoints, 13, new_p13)
 
-        # new_p12 = (p8 + p9) / 2
-        # new_p13 = (p10 + p11) / 2
-
-        # new_p12[0] -= 24
-        # new_p13[0] -= 30
-
-        # self.set_point(keypoints, 12, new_p12)
-        # self.set_point(keypoints, 13, new_p13)
+        print("FINAL 12:", self.get_point(keypoints, 12))
+        print("FINAL 13:", self.get_point(keypoints, 13))
 
         return keypoints
 
