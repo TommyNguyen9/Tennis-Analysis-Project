@@ -110,19 +110,50 @@ class CourtLineDetector:
         return keypoints
     
     def correct_keypoints_12_and_13(self, keypoints):
+        p4 = self.get_point(keypoints, 4)
+        p5 = self.get_point(keypoints, 5)
+        p6 = self.get_point(keypoints, 6)
+        p7 = self.get_point(keypoints, 7)
+
         p8 = self.get_point(keypoints, 8)
         p9 = self.get_point(keypoints, 9)
         p10 = self.get_point(keypoints, 10)
         p11 = self.get_point(keypoints, 11)
+        p13 = self.get_point(keypoints, 13)
 
-        new_p12 = (p8 + p9) / 2
-        new_p13 = (p10 + p11) / 2
+        # Moving down the court:
 
-        new_p12[0] -= 19
-        new_p13[0] -= 30
+        left_singles_line = self.line_from_points(p4, p5)
+        right_singles_line = self.line_from_points(p6, p7)
 
-        self.set_point(keypoints, 12, new_p12)
-        self.set_point(keypoints, 13, new_p13)
+        # Vanishing point for the court length direction:
+        vanishing_point = self.intersection(left_singles_line, right_singles_line)
+
+        if vanishing_point is None:
+            return keypoints
+        
+        top_service_line = self.line_from_points(p8, p9)
+        bottom_service_line = self.line_from_points(p10, p11)
+
+        centre_service_line = self.line_from_points(p13, vanishing_point)
+
+        new_p12 = self.intersection(centre_service_line, top_service_line)
+        new_p13 = self.intersection(centre_service_line, bottom_service_line)
+
+        if new_p12 is not None:
+            self.set_point(keypoints, 12, new_p12)
+
+        if new_p13 is not None:
+            self.set_point(keypoints, 13, new_p13)
+
+        # new_p12 = (p8 + p9) / 2
+        # new_p13 = (p10 + p11) / 2
+
+        # new_p12[0] -= 24
+        # new_p13[0] -= 30
+
+        # self.set_point(keypoints, 12, new_p12)
+        # self.set_point(keypoints, 13, new_p13)
 
         return keypoints
 
