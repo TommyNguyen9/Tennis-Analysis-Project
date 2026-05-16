@@ -118,8 +118,8 @@ class CourtLineDetector:
         new_p12 = (p8 + p9) / 2
         new_p13 = (p10 + p11) / 2
 
-        new_p12[0] -= 8
-        new_p13[0] -= 25
+        new_p12[0] -= 19
+        new_p13[0] -= 30
 
         self.set_point(keypoints, 12, new_p12)
         self.set_point(keypoints, 13, new_p13)
