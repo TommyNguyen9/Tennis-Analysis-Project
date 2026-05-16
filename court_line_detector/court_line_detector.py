@@ -36,6 +36,7 @@ class CourtLineDetector:
 
         keypoints = self.correct_keypoints_2_and_5(keypoints)
         keypoints = self.correct_keypoint_10(keypoints)
+        keypoints = self.correct_keypoints_12_and_13(keypoints)
 
         return keypoints
     
@@ -105,6 +106,23 @@ class CourtLineDetector:
             new_p10[1] += 13 #Move it slightly down.
 
             self.set_point(keypoints, 10, new_p10)
+
+        return keypoints
+    
+    def correct_keypoints_12_and_13(self, keypoints):
+        p8 = self.get_point(keypoints, 8)
+        p9 = self.get_point(keypoints, 9)
+        p10 = self.get_point(keypoints, 10)
+        p11 = self.get_point(keypoints, 11)
+
+        new_p12 = (p8 + p9) / 2
+        new_p13 = (p10 + p11) / 2
+
+        new_p12[0] -= 8
+        new_p13[0] -= 25
+
+        self.set_point(keypoints, 12, new_p12)
+        self.set_point(keypoints, 13, new_p13)
 
         return keypoints
 
