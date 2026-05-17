@@ -36,8 +36,9 @@ class CourtLineDetector:
 
         keypoints = self.correct_keypoints_2_and_5(keypoints)
         keypoints = self.correct_keypoint_10(keypoints)
-        keypoints = self.correct_keypoints_12_and_13(keypoints)
+        keypoints = self.correct_keypoints_12(keypoints)
         keypoints = self.correct_keypoint_11(keypoints)
+        keypoints = self.correct_keypoint_13(keypoints)
         
         return keypoints
     
@@ -124,7 +125,7 @@ class CourtLineDetector:
         
         return keypoints
     
-    def correct_keypoints_12_and_13(self, keypoints):
+    def correct_keypoints_12(self, keypoints):
         # print("12/13 KEYPOINTS RUNNING")
         # print("OLD 12:", self.get_point(keypoints, 12))
        
@@ -180,6 +181,19 @@ class CourtLineDetector:
 
         # print("FINAL 12:", self.get_point(keypoints, 12))
         # print("FINAL 13:", self.get_point(keypoints, 13))
+
+        return keypoints
+    
+    def correct_keypoint_13(self, keypoints):
+        p10 = self.get_point(keypoints, 10)
+        p11 = self.get_point(keypoints, 11)
+
+        new_p13 = (p10 + p11) / 2
+
+        new_p13[0] += 0
+        new_p13[1] += 0
+
+        self.set_point(keypoints, 13, new_p13)
 
         return keypoints
 
