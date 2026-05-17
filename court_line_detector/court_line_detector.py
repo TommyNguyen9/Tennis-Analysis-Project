@@ -37,7 +37,8 @@ class CourtLineDetector:
         keypoints = self.correct_keypoints_2_and_5(keypoints)
         keypoints = self.correct_keypoint_10(keypoints)
         keypoints = self.correct_keypoints_12_and_13(keypoints)
-
+        keypoints = self.correct_keypoint_11(keypoints)
+        
         return keypoints
     
     def get_point(self, keypoints, idx):
@@ -109,11 +110,24 @@ class CourtLineDetector:
 
         return keypoints
     
-    def correct_keypoints_12_and_13(self, keypoints):
-        print("12/13 KEYPOINTS RUNNING")
-        print("OLD 12:", self.get_point(keypoints, 12))
-        print("OLD 13:", self.get_point(keypoints, 13))
+    def correct_keypoint_11(self, keypoints):
+        p10 = self.get_point(keypoints, 10)
+        p13 = self.get_point(keypoints, 13)
 
+        new_p11 = 2 * p13 - p10
+
+        # manual tuning:
+        new_p11[0] += 15 
+        new_p11[1] -= 10
+
+        self.set_point(keypoints, 11, new_p11)
+        
+        return keypoints
+    
+    def correct_keypoints_12_and_13(self, keypoints):
+        # print("12/13 KEYPOINTS RUNNING")
+        # print("OLD 12:", self.get_point(keypoints, 12))
+       
         p4 = self.get_point(keypoints, 4)
         p5 = self.get_point(keypoints, 5)
         p6 = self.get_point(keypoints, 6)
@@ -124,6 +138,12 @@ class CourtLineDetector:
         p10 = self.get_point(keypoints, 10)
         p11 = self.get_point(keypoints, 11)
         p13 = self.get_point(keypoints, 13)
+
+        # print("P10:", p10)
+        # print("P11:", p11)
+        # print("OLD 13:", self.get_point(keypoints, 13))
+        # print("MIDPOINT 13:", (p10 + p11) / 2)
+
 
     
         # Moving down the court:
@@ -145,8 +165,8 @@ class CourtLineDetector:
         new_p12 = self.intersection(centre_service_line, top_service_line)
         new_p13 = self.intersection(centre_service_line, bottom_service_line)
 
-        print("NEW 12:", new_p12)
-        print("NEW 13:", new_p13)
+        # print("NEW 12:", new_p12)
+        # print("NEW 13:", new_p13)
 
         if new_p12 is not None:
             new_p12[0] -= 14
@@ -158,8 +178,8 @@ class CourtLineDetector:
             new_p13[1] += 12
             self.set_point(keypoints, 13, new_p13)
 
-        print("FINAL 12:", self.get_point(keypoints, 12))
-        print("FINAL 13:", self.get_point(keypoints, 13))
+        # print("FINAL 12:", self.get_point(keypoints, 12))
+        # print("FINAL 13:", self.get_point(keypoints, 13))
 
         return keypoints
 
