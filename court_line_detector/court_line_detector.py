@@ -87,6 +87,14 @@ class CourtLineDetector:
         p2_new[0] += 80
         p5_new[0] += 60
 
+        # Fine tuning to ensure points are fully accurate:
+
+        p2_new[0] += 5
+        p2_new[1] -= 5
+
+        p5_new[0] += 5
+        p5_new[1] -= 5
+
         self.set_point(keypoints, 2, p2_new)
         self.set_point(keypoints, 5, p5_new)
         
@@ -145,7 +153,6 @@ class CourtLineDetector:
         # print("P11:", p11)
         # print("OLD 13:", self.get_point(keypoints, 13))
         # print("MIDPOINT 13:", (p10 + p11) / 2)
-
 
     
         # Moving down the court:
@@ -215,11 +222,11 @@ class CourtLineDetector:
         new_p7 = p5 + singles_vector
         new_p3 = new_p7 + alley_vector
 
-        new_p7[0] -= 15 # left
-        new_p7[1] -= 7 # down
+        new_p7[0] -= 21 # left
+        new_p7[1] -= 3 # up
 
-        new_p3[0] -= 17
-        new_p3[1] -= 7
+        new_p3[0] -= 20
+        new_p3[1] -= 3
 
         self.set_point(keypoints, 7, new_p7)
         self.set_point(keypoints, 3, new_p3)
