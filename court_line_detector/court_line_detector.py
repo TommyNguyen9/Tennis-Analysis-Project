@@ -201,11 +201,10 @@ class CourtLineDetector:
     def correct_keypoints_7_and_3(self, keypoints):
         p2 = self.get_point(keypoints, 2)
         p5 = self.get_point(keypoints, 5)
-
+        
         alley = 1.37
         singles_width = 8.23
-        doubles_width = 10.97
-
+       
         # From doubles sideline to singles sideline (left side):
         alley_vector = p5 - p2
 
@@ -216,11 +215,11 @@ class CourtLineDetector:
         new_p7 = p5 + singles_vector
         new_p3 = new_p7 + alley_vector
 
-        new_p7[0] += 12
-        new_p7[1] -= 20
+        new_p7[0] -= 13
+        new_p7[1] -= 5
 
-        new_p3[0] += 0
-        new_p3[1] += 0
+        new_p3[0] += 5
+        new_p3[1] -= 5
 
         self.set_point(keypoints, 7, new_p7)
         self.set_point(keypoints, 3, new_p3)
