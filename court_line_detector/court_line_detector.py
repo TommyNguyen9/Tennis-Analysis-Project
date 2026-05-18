@@ -215,8 +215,8 @@ class CourtLineDetector:
         new_p7 = p5 + singles_vector
         new_p3 = new_p7 + alley_vector
 
-        new_p7[0] -= 13
-        new_p7[1] -= 5
+        new_p7[0] -= 15 # left
+        new_p7[1] -= 7 # down
 
         new_p3[0] += 5
         new_p3[1] -= 5
