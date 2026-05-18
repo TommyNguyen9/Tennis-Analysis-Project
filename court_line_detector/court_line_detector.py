@@ -218,8 +218,8 @@ class CourtLineDetector:
         new_p7[0] -= 15 # left
         new_p7[1] -= 7 # down
 
-        new_p3[0] += 5
-        new_p3[1] -= 5
+        new_p3[0] -= 17
+        new_p3[1] -= 7
 
         self.set_point(keypoints, 7, new_p7)
         self.set_point(keypoints, 3, new_p3)
