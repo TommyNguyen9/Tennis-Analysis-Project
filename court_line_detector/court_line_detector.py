@@ -40,6 +40,7 @@ class CourtLineDetector:
         keypoints = self.correct_keypoint_11(keypoints)
         keypoints = self.correct_keypoint_13(keypoints)
         keypoints = self.correct_keypoints_7_and_3(keypoints)
+        keypoints = self.correct_keypoints_8_and_9(keypoints)
         
         return keypoints
     
@@ -230,6 +231,37 @@ class CourtLineDetector:
 
         self.set_point(keypoints, 7, new_p7)
         self.set_point(keypoints, 3, new_p3)
+
+        return keypoints
+    
+    def correct_keypoints_8_and_9(self, keypoints):
+        p4 = self.get_point(keypoints, 4)
+        p5 = self.get_point(keypoints, 5)
+        p6 = self.get_point(keypoints, 6)
+        p7 = self.get_point(keypoints, 7)
+
+        p8 = self.get_point(keypoints, 8)
+        p9 = self.get_point(keypoints, 9)
+        p12 = self.get_point(keypoints, 12)
+
+        left_singles_line = self.line_from_points(p4, p5)
+        right_singles_line = self.line_from_points(p6, p7)
+
+        # Using 8 & 9 to define top service line:
+        top_service_line = self.line_from_points(p8, p9)
+
+        new_p8 = self.intersection(left_singles_line, top_service_line)
+        new_p9 = self.intersection(right_singles_line, top_service_line)
+
+        if new_p8 is not None:
+            new_p8[0] -= 25
+            new_p8[1] -= -9
+            self.set_point(keypoints, 8, new_p8)
+        
+        if new_p9 is not None:
+            new_p9[0] -= 14
+            new_p9[1] -= -8
+            self.set_point(keypoints, 9, new_p9)
 
         return keypoints
 
