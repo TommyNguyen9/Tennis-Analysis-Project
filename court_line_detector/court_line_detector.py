@@ -42,6 +42,7 @@ class CourtLineDetector:
         keypoints = self.correct_keypoints_7_and_3(keypoints)
         keypoints = self.correct_keypoints_8_and_9(keypoints)
         keypoints = self.correct_keypoints_0_and_4(keypoints)
+        keypoints = self.correct_keypoints_6_and_1(keypoints)
         
         return keypoints
     
@@ -289,6 +290,32 @@ class CourtLineDetector:
 
         self.set_point(keypoints, 0, new_p0)
         self.set_point(keypoints, 4, new_p4)
+
+        return keypoints
+    
+    def correct_keypoints_6_and_1(self, keypoints):
+        p4 = self.get_point(keypoints, 4)
+        p6 = self.get_point(keypoints, 6)
+
+        alley = 1.37
+        singles_width = 8.23
+
+        singles_vector = p6 - p4
+        alley_vector = singles_vector * (alley / singles_width)
+
+        new_p6 = p6.copy()
+        new_p1 = new_p6 + alley_vector
+
+        new_p6[0] -= 17
+        new_p6[1] += 0
+
+        new_p1 = new_p6 + alley_vector
+
+        new_p1[0] -= 8
+        new_p1[1] += 0
+
+        self.set_point(keypoints, 6, new_p6)
+        self.set_point(keypoints, 1, new_p1)
 
         return keypoints
 
