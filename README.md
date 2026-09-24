@@ -51,3 +51,12 @@ Place your tennis video inside:
 input_videos/
 ```
 
+### Current Models
+
+The main analysis pipeline currently uses:
+
+- YOLOv8 for player detection
+- Custom YOLOv8 tennis ball detector
+- Custom-trained tennis court keypoint mode
+
+
