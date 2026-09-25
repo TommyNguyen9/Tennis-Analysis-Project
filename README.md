@@ -16,7 +16,7 @@ The system peforms:
 - Tennis court keypoint detection
 - Mini court visualisation
 - Ball & Player position mapping
-- Shot speed estimatino
+- Shot speed estimation
 - Player movement speed estimates
 - Match statistics overlay
 
